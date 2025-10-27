@@ -1,47 +1,45 @@
 // src/api/weather.js
 import axios from "axios";
 
-const BASE = "https://api.openweathermap.org/data/2.5";
-const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
+/**
+ * Use environment variable (Vite) if present, otherwise fallback to the hard-coded URL.
+ * Make sure VITE_WEATHER_BACKEND_URL is set in your .env.local file (and you've restarted the dev server).
+ */
+const BACKEND = import.meta.env.VITE_WEATHER_BACKEND_URL || "https://weather-backend-h8by.onrender.com";
 
 /**
- * Fetch current weather by city name
- * @param {string} city
- * @returns {Promise<object>}
+ * Fetch weather by city (proxied via your backend)
+ * Note: backend expects query param `city`
  */
 export async function fetchWeatherByCity(city) {
-  if (!API_KEY) throw new Error("Missing OpenWeather API key (VITE_OPENWEATHER_API_KEY)");
-  const url = `${BASE}/weather`;
-  const params = {
-    q: city,
-    units: "metric",
-    appid: API_KEY,
-  };
-  const res = await axios.get(url, { params });
-  return res.data;
+  try {
+    const url = `${BACKEND}/weather?city=${encodeURIComponent(city)}`;
+    const res = await axios.get(url);
+    return res.data;
+  } catch (err) {
+    // rethrow so callers can handle error
+    console.error("fetchWeatherByCity error:", err);
+    throw err;
+  }
 }
 
 /**
- * Fetch current weather by lat/lon
- * @param {number} lat
- * @param {number} lon
- * @returns {Promise<object>}
+ * Fetch weather by coordinates (lat, lon)
  */
 export async function fetchWeatherByCoords(lat, lon) {
-  if (!API_KEY) throw new Error("Missing OpenWeather API key (VITE_OPENWEATHER_API_KEY)");
-  const url = `${BASE}/weather`;
-  const params = {
-    lat,
-    lon,
-    units: "metric",
-    appid: API_KEY,
-  };
-  const res = await axios.get(url, { params });
-  return res.data;
+  try {
+    const url = `${BACKEND}/weather?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`;
+    const res = await axios.get(url);
+    return res.data;
+  } catch (err) {
+    console.error("fetchWeatherByCoords error:", err);
+    throw err;
+  }
 }
 
-// helper for icon url
+/**
+ * Utility to produce OpenWeather icon URL (WeatherCard uses this)
+ */
 export function getIconUrl(iconCode) {
-  // OpenWeather has icon URLs like: http://openweathermap.org/img/wn/{icon}@2x.png
   return `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
 }
